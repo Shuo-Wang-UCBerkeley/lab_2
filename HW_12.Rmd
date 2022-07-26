@@ -66,19 +66,23 @@ Solution
 1.IID
 
 (1) Independent
-There are competition between video makers, so some videos are dependent on other videos. This independence assumption does not apply.
+Our sample data is not independent due to the video recommendation feature that prompts users with twenty videos to watch based on said user's previous behavior on YouTube. In turn, this excludes many videos. 
 
 (2) Identical distributed
-youtude algorithm is same for every draws, so all the sample videos are from the same and identical distribution.
+our sample is identically distributed because the algorithm referenced above affects all users. 
+
+In short, due to a lack of independence the sample violates this assumption.
 
 
 \newpage
 2.No perfect Colinearity
-
-The rate means the proxy for the video quality, it is not related with video length. Therefore, this assumption "No perfect colinearity" is met. 
+Given the nature of video length, rate or video quality, and number of views, our sample is not perfect collinearity. In essence, no amount of linear transformations will allow for one variable to be represented by the other two.
 
 \newpage
 3.Linear Conditional Expectation
+
+
+First, let me remove the empty rows.
 
 ```{r}
 # check empty row
@@ -86,11 +90,55 @@ summary(df['rate'])
 ```
 
 ```{r}
-# drop ampty rows
+# drop empty rows
 df <- df[!is.na(df$views),]
 dim(df)
 ```
 
+
+Second, let us check the outliers for rate, length and views. 
+
+```{r}
+model_1 <- lm(log(views) ~ rate + length, data = df)
+# model_1
+
+
+df <- df[!is.na(df$views),]
+
+# df <- filter(df, views < 1000000)
+
+# boxplot(df$views<1000000, data = df, subset = df$views)
+
+df <- df %>%
+  mutate(
+    model_1_predictions = predict(model_1),
+    model_1_residuals = resid(model_1)
+  )
+```
+
+```{r echo = TRUE, message = FALSE}
+plot_model_1a <- df %>%  
+  ggplot(aes(x = rate, y = model_1_residuals)) + 
+  geom_point() + stat_smooth()
+
+plot_model_1b <- df %>%  
+  ggplot(aes(x = length, y = model_1_residuals)) + 
+  geom_point() + stat_smooth()
+
+
+plot_model_1c <- df %>%  
+  ggplot(aes(x = model_1_predictions, y = model_1_residuals)) + 
+  geom_point() + stat_smooth()
+
+plot_model_1a / plot_model_1b / plot_model_1c
+```
+
+
+From above chart, there are lots of outliers for views, length and rate. 
+
+If the values in one column is out of the 1.5 standard error range of mean, then they are defined as outliers, and then the corresponding whole rows will be removed from the dateframe. 
+
+Remove the rate outliers and corresponding rows.
 ```{r}
 
 #find Q1, Q3, and interquartile range for values in column A
@@ -106,6 +154,7 @@ dim(df)
 ```
 
 
+Remove the length outliers and corresponding rows.
 ```{r}
 
 #find Q1, Q3, and interquartile range for values in column A
@@ -120,6 +169,8 @@ df <- subset(df, df$length> (Q1 - 1.5*IQR) & df$length< (Q3 + 1.5*IQR))
 dim(df) 
 ```
 
+
+Remove the views outliers and corresponding rows.
 ```{r}
 
 #find Q1, Q3, and interquartile range for values in column A
@@ -134,6 +185,8 @@ df <- subset(df, df$views> (Q1 - 1.5*IQR) & df$views< (Q3 + 1.5*IQR))
 dim(df) 
 ```
 
+
+After the outliers are removed, the plots (residiual vs rate, residiual vs length and residiual vs predictions) are drawn.
 ```{r}
 model_2 <- lm(log(views) ~ rate + length, data=df)
 
@@ -149,30 +202,39 @@ df <- df %>%
 ```
 
 ```{r echo = TRUE, message = FALSE}
-plot_model_1a <- df %>%  
+plot_model_2a <- df %>%  
   ggplot(aes(x = rate, y = model_2_residuals)) + 
   geom_point() + stat_smooth()
 
-plot_model_1b <- df %>%  
+plot_model_2b <- df %>%  
   ggplot(aes(x = length, y = model_2_residuals)) + 
   geom_point() + stat_smooth()
 
 
-plot_model_1c <- df %>%  
+plot_model_2c <- df %>%  
   ggplot(aes(x = model_2_predictions, y = model_2_residuals)) + 
   geom_point() + stat_smooth()
 
-(plot_model_1a | plot_model_1b) / plot_model_1c
+plot_model_2a / plot_model_2b / plot_model_2c
 
 ```
+
+As seen in said chart above, there is only one place in the middle of our sample where we don't have a near perfect linear-fit. Overall, the model suffices to not violate this assumption. 
+
 \newpage
-4. Homoskedastic Errors
+4.Homoskedastic Errors
 ```{r}
-plot_model_1c
+plot_model_2c
 ```
+
+As seen in said chart above, variance is very consistent throughout the model, the difference on the y-axis between positive and negative data points only slightly changes. Therefore, the model is homoskedastic and does not violate this assumption. 
+
+
 \newpage
-5. Normally Distributed Errors
+5.Normally Distributed Errors
 ```{r}
 hist(df$model_2_residuals)
 ```
-\newpage
+
+
+As seen in said histogram above, there is a left-tail. Thus, the sample is left-skewed and has normally distributed errors, which violates this assumption.
