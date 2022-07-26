@@ -66,7 +66,7 @@ Solution
 1.IID
 
 (1) Independent
-Our sample data is not independent due to the video recommendation feature that prompts users with twenty videos to watch based on said user's previous behavior on YouTube. In turn, this excludes many videos. 
+There are several factors which makes our sample data not IID. First, Youtubers will often copy elements of other Youtube videos that are successful or have “gone viral.” This means that one video can impact other videos, breaking independence. Another factor is that videos are chosen based on recommendations from an initial set of videos. “Recommended” videos disproportionally favor videos from the same category and even same creator. This means that the videos are not picked randomly from the set of all videos.
 
 (2) Identical distributed
 our sample is identically distributed because the algorithm referenced above affects all users. 
@@ -76,7 +76,8 @@ In short, due to a lack of independence the sample violates this assumption.
 
 \newpage
 2.No perfect Colinearity
-Given the nature of video length, rate or video quality, and number of views, our sample is not perfect collinearity. In essence, no amount of linear transformations will allow for one variable to be represented by the other two.
+There is no perfect colinearity between the causal variables video length and average ratings. In essence, no amount of linear transformations will allow for one variable to be represented by the other.
+
 
 \newpage
 3.Linear Conditional Expectation
